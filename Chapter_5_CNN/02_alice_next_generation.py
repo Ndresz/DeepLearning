@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 import os
 
-# 1. Download the text
 print("Downloading Alice in Wonderland...")
 url = "https://www.gutenberg.org/files/11/11-0.txt"
 path = tf.keras.utils.get_file("alice.txt", url)
@@ -19,7 +18,6 @@ idx2char = np.array(vocab)
 
 text_as_int = np.array([char2idx[c] for c in text])
 
-# 2. Create dataset windows
 seq_length = 100
 examples_per_epoch = len(text) // (seq_length + 1)
 
@@ -37,14 +35,13 @@ BATCH_SIZE = 64
 BUFFER_SIZE = 10000
 dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
 
-# 3. Build the Model (FIXED)
 vocab_size = len(vocab)
 embedding_dim = 256
 rnn_units = 1024
 
 def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
     model = tf.keras.Sequential([
-        tf.keras.Input(shape=(None,), batch_size=batch_size), # This fixes the error
+        tf.keras.Input(shape=(None,), batch_size=batch_size),
         tf.keras.layers.Embedding(vocab_size, embedding_dim),
         tf.keras.layers.GRU(rnn_units, return_sequences=True, stateful=True, recurrent_initializer='glorot_uniform'),
         tf.keras.layers.Dense(vocab_size)
@@ -54,7 +51,6 @@ def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
 model = build_model(vocab_size, embedding_dim, rnn_units, BATCH_SIZE)
 model.summary()
 
-# 4. Compile and Train
 def loss(labels, logits):
     return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
 
@@ -63,17 +59,14 @@ model.compile(optimizer='adam', loss=loss)
 EPOCHS = 10
 history = model.fit(dataset, epochs=EPOCHS)
 
-# 5. Save weights
 model.save_weights('alice_weights.weights.h5')
 
-# 6. Generation
 def generate_text(model, start_string, temperature=1.0):
     num_generate = 200
     input_eval = [char2idx[s] for s in start_string]
     input_eval = tf.expand_dims(input_eval, 0)
 
     text_generated = []
-    model.reset_states()
     
     for i in range(num_generate):
         predictions = model(input_eval)
@@ -86,7 +79,6 @@ def generate_text(model, start_string, temperature=1.0):
         
     return start_string + ''.join(text_generated)
 
-# Build a new model with batch_size=1 and load the trained weights
 model = build_model(vocab_size, embedding_dim, rnn_units, batch_size=1)
 model.load_weights('alice_weights.weights.h5')
 
