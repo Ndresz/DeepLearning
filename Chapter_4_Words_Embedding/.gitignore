@@ -1,0 +1,7 @@
+.venv/
+venv/
+data/
+datasets/
+__pycache__/
+*.h5
+*.bin
